@@ -1,7 +1,8 @@
-import datetime
 import os
-from typing import Generator
+import datetime
 import pandas as pd
+
+from typing import Generator
 
 
 def read_data(source_dir: str) -> Generator:
@@ -33,7 +34,7 @@ def pre_process(source_dir: str) -> pd.DataFrame:
         return pd.DataFrame(data_list[1:], columns=data_list[0])
 
     # return empty dataframe if no .dat file exists in SOURCE_DIR
-    print(f"No .dat file found in the specified {source_dir=} folder.")
+    print(f"WARNING: No .dat file found in the specified {source_dir=} folder.")
     return pd.DataFrame()
 
 
@@ -55,13 +56,13 @@ def nth_largest_salary(top: int, nth: int, dataframe: pd.DataFrame) -> float:
     )
 
 
-def write_result_to_csv(dataframe: pd.DataFrame, target_dir: str):
+def write_result_to_csv(dataframe: pd.DataFrame, target_dir: str) -> None:
     # wrtting dataframe content to the specified location
 
     try:
         filepath = f"{target_dir}/{datetime.datetime.now(datetime.UTC).timestamp()}.csv"
         dataframe.to_csv(filepath, sep=",", index=False)
-        print(f"RESSULT: Saved at file: {filepath=}")
+        print(f"INFO: Saved at file: {filepath=}")
     except Exception as e:
         print(f"ERROR: While saving dataframe as CSV. \n {e}")
 
@@ -72,6 +73,15 @@ def processing(source_dir: str, target_dir: str) -> None:
     try:
         dataframe = pre_process(source_dir)
         if not dataframe.empty:
+            if (
+                "basic_salary" not in dataframe.columns
+                or "allowances" not in dataframe.columns
+            ):
+                print(
+                    f"INFO: Desired columns (`basic_salary`, `allowances`) does not exists in {dataframe.columns=}."
+                )
+                return
+
             # string to numeric conversion of basic_salary and allowances
             dataframe["basic_salary"] = pd.to_numeric(
                 dataframe["basic_salary"], errors="coerce"
@@ -109,6 +119,8 @@ def processing(source_dir: str, target_dir: str) -> None:
 
             # save dataframe to the CSV file
             write_result_to_csv(dataframe, target_dir)
+        else:
+            print("INFO: Nothing to process.")
     except Exception as e:
         print(f"ERROR: While processing data: {e}")
 
